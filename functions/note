@@ -1,0 +1,33 @@
+note () {
+  local flag_help
+  local arg_pyg
+  local usage=(
+    "Usage:"
+    "  p [-h|--help]"
+    "  p [-p|--pygemtize] lexer"
+  )
+  zmodload zsh/zutil
+  zparseopts -D -F -- {h,-help}=flag_help {p,-pygmentize}:=arg_pyg || return 1
+  [[ -z "$flag_help" ]] || { print -l $usage && return }
+
+  if [[ -n $* ]]; then
+    (
+      cd ~/notes
+      if (( $#arg_pyg )) && (( $+commands[pygmentize] )); then
+        LESSOPEN="|pygmentize -l ${arg_pyg[-1]} %s" less -RXF $*
+      else
+        less -FX $*
+      fi
+    )
+  else
+    ls ~/notes
+  fi
+}
+
+compdef '_path_files -W "$HOME/notes/" -g "^.*"' note
+alias n='note'
+
+# note   ## init doesn't work for alias here
+# for some reason (?), alias doesn't get defined if note is initialized here
+# instead of in .zshrc. probably good reason, i just don't know it yet
+

@@ -1,0 +1,1 @@
+LESS='-i --pattern='$2 man $1
