@@ -1,0 +1,6 @@
+(
+  # YUCK
+  export SSL_CERT_FILE=/Users/heath/repos/postgresqlstan.github.io/.bundle/cacert.pem
+  cd ~/repos/postgresqlstan.github.io
+  bundle exec jekyll serve -D
+)

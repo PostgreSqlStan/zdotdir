@@ -1,0 +1,10 @@
+pbnote () {
+  local default_bin target_file content
+  default_bin=~/notes/pasted
+  target_file=${PBNOTE:=${default_bin}}
+
+  # pbpaste | col -b >> "${target_file}"
+
+  content="[$(date)]\n$(pbpaste | col -b)\n"
+  print -- $content >> $target_file
+}

@@ -1,23 +1,69 @@
-note () {
+# copy usage example from bindlist which works with gnu_generic comletions
+pbnote () {
   local flag_help
-  local arg_pyg
+  local flag_plain
+  local arg_note
   local usage=(
     "Usage:"
-    "  p [-h|--help]"
-    "  p [-p|--pygemtize] lexer"
+    "  pbnote [-n|--note]   - name of note"
+    "  pbnote [-h|--help]   - show this message"
+    "  pbnote [-p|--plain]  - no timestamp"
   )
   zmodload zsh/zutil
-  zparseopts -D -F -- {h,-help}=flag_help {p,-pygmentize}:=arg_pyg || return 1
+  zparseopts -D -F -- {h,-help}=flag_help \
+    {n,-note}:=arg_note \
+    {p,-plain}=flag_plain \
+    || return 1
   [[ -z "$flag_help" ]] || { print -l $usage && return }
+
+  local default_bin target_file content
+  default_bin=~/notes/pasted-$(date "+%Y-%m-%d")
+
+  if [[ -n "$arg_note" ]]; then
+    target_file=~/notes/${arg_note[-1]}
+  else
+    target_file=${default_bin}
+  fi
+
+  if [[ -n "$flag_plain" ]]; then
+    content="$(pbpaste | col -b)"
+  else
+    content="[$(date)]\n$(pbpaste | col -b)"
+  fi
+  print -- $content >> $target_file
+}
+compdef _gnu_generic pbnote
+
+
+note () {
+  local flag_help
+  local flag_kramdown
+  local usage=(
+    "Usage:"
+    "  note [-h|--help]"
+  )
+  zmodload zsh/zutil
+  zparseopts -D -F -- {h,-help}=flag_help \
+    {k,-kramdown}=flag_kramdown \
+    || return 1
+  [[ -z "$flag_help" ]] || { print -l $usage && return }
+
+  if (( $#flag_kramdown )) && (( $+commands[kramdown] )); then
+    tmp_file=$(mktemp -t note.XXX)
+    mv ${tmp_file} ${tmp_file}.html
+    tmp_file=${tmp_file}.html
+    print -- '$@: '$@
+    kramdown ~/notes/$@ > ${tmp_file}
+    open -a Safari ${tmp_file}
+  else
+    less -FX $*
+  fi
+
 
   if [[ -n $* ]]; then
     (
       cd ~/notes
-      if (( $#arg_pyg )) && (( $+commands[pygmentize] )); then
-        LESSOPEN="|pygmentize -l ${arg_pyg[-1]} %s" less -RXF $*
-      else
-        less -FX $*
-      fi
+      less -FX $*
     )
   else
     ls ~/notes
@@ -26,8 +72,3 @@ note () {
 
 compdef '_path_files -W "$HOME/notes/" -g "^.*"' note
 alias n='note'
-
-# note   ## init doesn't work for alias here
-# for some reason (?), alias doesn't get defined if note is initialized here
-# instead of in .zshrc. probably good reason, i just don't know it yet
-

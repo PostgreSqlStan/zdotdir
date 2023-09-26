@@ -2,6 +2,8 @@
 PATH=/Applications/Sublime\ Text.app/Contents/SharedSupport/bin:$PATH
 PATH=/usr/local/pgsql/bin:$PATH        # postres
 PATH=$HOME/.local/bin:$PATH            # python site-packages
+PATH=$HOME/.rubies/ruby-master/bin:$PATH  # local ruby (3)
+
 typeset -U path                        # remove dupes
 
 MANPATH=:/usr/local/pgsql/share/man:$MANPATH
@@ -87,7 +89,7 @@ alias rh=' fc -RI'                     # refresh history from other windows
 alias cb=' fc -ln -1 | pbcopy'         # copy buffer (last command)
 alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
 alias e='subl'
-alias cgrep='grep --color=auto'
+alias cgrep='grep --color=always'
 
 # BINDINGS
 # additions
