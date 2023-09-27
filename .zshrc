@@ -1,4 +1,4 @@
-# PATH
+## PATH
 PATH=/Applications/Sublime\ Text.app/Contents/SharedSupport/bin:$PATH
 PATH=/usr/local/pgsql/bin:$PATH        # postres
 PATH=$HOME/.local/bin:$PATH            # python site-packages
@@ -8,33 +8,11 @@ typeset -U path                        # remove dupes
 
 MANPATH=:/usr/local/pgsql/share/man:$MANPATH
 
-# ENV
+## ENV
 export EDITOR='subl -w'                # sublime text
 export LESS='-XF'                      # LESS prefs
 
-# PROMPT
-PROMPT='%(?.%F{green}√.%F{red}?%?)%f %B%F{240}%1~%f%b %# '
-# colorized git right-side prompt, color method from:
-# https://gist.githubusercontent.com/chrisnolet/d3582cd63eb3d7b4fcb4d5975fd91d04/raw/22b7819fe437f6c46d58eaf48171229fc642bec6/.zshrc
-autoload -Uz add-zsh-hook
-autoload -Uz vcs_info
-add-zsh-hook precmd vcs_info
-zstyle ':vcs_info:*' enable git
-zstyle ':vcs_info:*' formats " %F{cyan}%c%u(%b)%f"
-zstyle ':vcs_info:*' actionformats " %F{cyan}%c%u(%b)%f %a"
-zstyle ':vcs_info:*' stagedstr "%F{green}"
-zstyle ':vcs_info:*' unstagedstr "%F{red}"
-zstyle ':vcs_info:*' check-for-changes true
-zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
-+vi-git-untracked() {
-  if git --no-optional-locks status --porcelain 2> /dev/null | grep -q "^??"; then
-    hook_com[staged]+="%F{red}"
-  fi
-}
-setopt PROMPT_SUBST
-RPROMPT=\$vcs_info_msg_0_
-
-# HISTORY
+## HISTORY
 SAVEHIST=49000
 HISTSIZE=50000                         # HISTSIZE should be ≥ SAVEHIST
 setopt EXTENDED_HISTORY                # include ISO timestamp
@@ -46,10 +24,18 @@ setopt HIST_NO_STORE                   # do not save history commands
 setopt HIST_REDUCE_BLANKS              # strip superfluous blanks
 setopt INC_APPEND_HISTORY              # don’t wait for exit to save
 
-# ZSH options
+## PROMPT: https://starship.rs
+export STARSHIP_CONFIG=${ZDOTDIR}/config/starship.toml
+eval "$(starship init zsh)"
+
+## ZSH options
 setopt INTERACTIVE_COMMENTS
 
-# ZSH MODULES
+## ZSH NAMED DIRETORIES
+blog=${HOME}/repos/postgresqlstan.github.io/
+z=${ZDOTDIR}
+
+## ZSH MODULES
 unalias run-help 2>/dev/null           # don't display err if already done
 autoload -Uz run-help                  # run-help
 alias help=run-help
@@ -68,7 +54,7 @@ zmodload zsh/complist
 compinit
 _comp_options+=(globdots)
 
-# FUNCTIONS                              (${ZDOTDIR}/functions)
+## FUNCTIONS                            (${ZDOTDIR}/functions)
 my_functions=${ZDOTDIR:-$HOME}/functions
 if [[ -z ${fpath[(r)$my_functions]} ]] ; then
     fpath=($my_functions $fpath)
@@ -81,8 +67,9 @@ typeset -U fpath                       # remove dupe paths
 # load after FUNCTIONS to include custom prompt theme
 autoload -U promptinit; promptinit     # prompt theme system
 
-# ALIASES
+## ALIASES
 alias l='ls -F'
+alias la='ls -AF'
 alias ll='ls -ahl'
 alias h=' fc -li'                      # history w/timestamp
 alias rh=' fc -RI'                     # refresh history from other windows
@@ -91,7 +78,9 @@ alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
 alias e='subl'
 alias cgrep='grep --color=always'
 
-# BINDINGS
+## BINDINGS
+# (still tweaking these...)
+
 # additions
 bindkey "^[^K" describe-key-briefly
 bindkey "^[k" kill-region
@@ -117,7 +106,7 @@ bindkey -r "^[\$"                      # spell-word
 bindkey -r "^S"
 bindkey -r "^Q"
 
-# NEW
-# try named directories
-blog=${HOME}/repos/postgresqlstan.github.io/
-z=${ZDOTDIR}
+
+## NEW
+
+

@@ -1,74 +1,93 @@
-# copy usage example from bindlist which works with gnu_generic comletions
 pbnote () {
   local flag_help
-  local flag_plain
-  local arg_note
+  local flag_nonewline
+  local flag_timestamp
+  local flag_input
+  local arg_prefix
   local usage=(
     "Usage:"
-    "  pbnote [-n|--note]   - name of note"
-    "  pbnote [-h|--help]   - show this message"
-    "  pbnote [-p|--plain]  - no timestamp"
+    "  pbnote                       save clipboard to default note"
+    "  pbnote name                  save clipboard to named note"
+    "Options:"
+    "  -h --help                    show this message"
+    "  -i --input                   prompt for prefix text"
+    "  -n --no-newline              do not add empty line"
+    "  -p --prefix text             prefix text"
+    "  -t --timestamp               add timestamp"
   )
+
+  add_input () {
+    local input
+    print 'Enter description (^d=exit, ^c=cancel):' \
+      && input=$(cat -)
+    prefix="${prefix}${input}\n"
+  }
+
   zmodload zsh/zutil
-  zparseopts -D -F -- {h,-help}=flag_help \
-    {n,-note}:=arg_note \
-    {p,-plain}=flag_plain \
+  zparseopts -D -F -- \
+    {h,-help}=flag_help \
+    {i,-input}=flag_input \
+    {n,-no-newline}=flag_nonewline \
+    {p,-prefix}:=arg_prefix \
+    {t,-timestamp}=flag_timestamp \
     || return 1
   [[ -z "$flag_help" ]] || { print -l $usage && return }
 
-  local default_bin target_file content
-  default_bin=~/notes/pasted-$(date "+%Y-%m-%d")
+  local editor=(${VISUAL:-${EDITOR:-vi}})
+  local note_home=${NOTE_HOME:-~/notes}
+  local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
 
-  if [[ -n "$arg_note" ]]; then
-    target_file=~/notes/${arg_note[-1]}
-  else
-    target_file=${default_bin}
-  fi
+  local content=$(pbpaste | col -b)
+  local prefix='\n'
 
-  if [[ -n "$flag_plain" ]]; then
-    content="$(pbpaste | col -b)"
-  else
-    content="[$(date)]\n$(pbpaste | col -b)"
-  fi
-  print -- $content >> $target_file
+  [[ -a "${note_home}/${note_name}" ]] && [[ -n "${flag_nonewline}" ]] \
+    || prefix=''
+
+  [[ -n "$flag_timestamp" ]] && prefix=${prefix}"[$(date)]"'\n'
+
+  [[ -n "$flag_input" ]] && add_input
+
+  print -- ${arg_prefix[-1]}${prefix}${content} >> ${note_home}/${note_name}
+  print -- ${arg_prefix[-1]}${prefix}${content}
+  print -P "%F{yellow}\[ ⇨ ${note_name} \]%f"
+
 }
 compdef _gnu_generic pbnote
 
 
 note () {
   local flag_help
-  local flag_kramdown
+  local flag_edit
   local usage=(
     "Usage:"
-    "  note [-h|--help]"
+    "  note                         list notes"
+    "  note <name>                  show note"
+    "Options:"
+    "  -e --edit <name>             edit note"
+    "  -h --help                    show this message"
   )
   zmodload zsh/zutil
-  zparseopts -D -F -- {h,-help}=flag_help \
-    {k,-kramdown}=flag_kramdown \
+  zparseopts -D -F -- \
+    {h,-help}=flag_help \
+    {e,-edit}=flag_edit \
     || return 1
   [[ -z "$flag_help" ]] || { print -l $usage && return }
 
-  if (( $#flag_kramdown )) && (( $+commands[kramdown] )); then
-    tmp_file=$(mktemp -t note.XXX)
-    mv ${tmp_file} ${tmp_file}.html
-    tmp_file=${tmp_file}.html
-    print -- '$@: '$@
-    kramdown ~/notes/$@ > ${tmp_file}
-    open -a Safari ${tmp_file}
-  else
-    less -FX $*
-  fi
-
+  local note_home=${NOTE_HOME:-~/notes}
+  local editor=(${VISUAL:-${EDITOR:-vi}})
 
   if [[ -n $* ]]; then
     (
-      cd ~/notes
-      less -FX $*
+      cd ${note_home}
+      if [[ -n "$flag_edit" ]]; then
+        eval ${editor} $*
+      else
+        less -FX $*
+      fi
     )
   else
-    ls ~/notes
+    ls ${note_home}
   fi
 }
-
-compdef '_path_files -W "$HOME/notes/" -g "^.*"' note
+compdef '_path_files -W "${NOTE_HOME:-${HOME}/notes/}" -g "^.*"' note
 alias n='note'

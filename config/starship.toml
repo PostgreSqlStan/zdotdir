@@ -1,0 +1,26 @@
+add_newline = false
+# format = """$character"""
+format = """$directory$character"""
+right_format = """$all"""
+
+[ruby]
+disabled = true
+
+[directory]
+style = 'fg:#eeeeee'
+truncation_length = 2
+truncate_to_repo = true
+
+[git_branch]
+style = 'green'
+format = "[$symbol](green)[$branch]($style)"
+symbol = ''
+# symbol = "-"
+
+
+[git_status]
+format = '([ $all_status$ahead_behind]($style) )'
+style = 'red'
+# staged = '[\($count\)](green)'
+
+
