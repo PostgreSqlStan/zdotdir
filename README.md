@@ -1,19 +1,37 @@
-## My zsh configuration
+A fairly simple zsh configuration for macOS.
 
-*Not much to see here.*
+## Environment
 
-This is a fairly minimal configuration without dependencies, tailored for my environment, zsh running on the builtin Terminal app on macOS.
+- macOS 13, zsh 5
+- Dependencies: [Starship prompt](https://starship.rs)
 
-In addition to the standard `.zshrc` configuration file, my `ZDOTDIR` includes:
+To use a zsh config directory, set the `ZDOTDIR` variable to the location from a `~/.zshenv` file.
 
-- functions in the aptly-named `functions` directory are autoloaded from `.zshrc`
-  - Don't assume I know what I'm doing. I'm a long-term shell user but a scripting noob. Some of these functions are misguided experiments.
-- `null_config` directory and `zdir` function are part of a quick hack for toggling on & off my zsh configuration
-
-A zsh configuration can be saved in any directory `ZDOTDIR` is set to in `~/.zshenv`. Mine is set to `~/.zsh.d`:
-
+For example, this directory is located at `~/.zsh.d` on my computer and `~/.zshenv` contains this line:
 
 ```
-# file: ~/.zshenv
 ZDOTDIR=~/.zsh.d
+```
+
+## Notes
+
+The entire `functions` directory is autoloaded from `.zshrc`.
+
+*I'm a noob at shell scripting. Don't assume anything here following best, or even sane, practices.*
+
+### Starship prompt
+
+*Currently test-driving the starship prompt. It's easy to install, fast, and easy to configure. I'll probably keep it.*
+
+I used the recommended shell script (after reviewing it) to install the starship binary at `/usr/local/bin`:
+
+```zsh
+curl -sS https://starship.rs/install.sh | sh
+```
+
+These lines in `.zshrc` load the starship prompt and specify a custom config file location:
+
+```zsh
+export STARSHIP_CONFIG=${ZDOTDIR}/config/starship.toml
+eval "$(starship init zsh)"
 ```
