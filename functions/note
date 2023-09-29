@@ -1,36 +1,45 @@
 pbnote () {
+	# zshoptions setup
 	local flag_help flag_input flag_nonewline flag_nopaste
 	local arg_title
 	local usage=(
 		"Usage:"
-		"  pbnote                       save clipboard to default note"
-		"  pbnote <note name>           save clipboard to named note"
+		"  pbnote                       add entry to default note"
+		"  pbnote <note name>           add entry named note"
 		"Options:"
 		"  -h --help                    show this message"
 		"  -i --input                   prompt for description"
-		"  -n --no-newline              do not add empty line"
-		"  -t --title <title>           heading title"
-		"  -x --no-paste                do not insert clipboard"
+		"  -n --no-newline              no empty line before entry"
+		"  -t --title <title>           entry title"
+		"  -v --paste                   insert clipboard (copied text)"
 	)
-
 	zmodload zsh/zutil
 	zparseopts -D -F -- \
 		{h,-help}=flag_help \
 		{i,-input}=flag_input \
 		{n,-no-newline}=flag_nonewline \
 		{t,-title}:=arg_title \
-		{x,-no-paste}=flag_nopaste \
+		{v,-paste}=flag_paste \
 		|| return 1
 	[[ -z "$flag_help" ]] || { print -l $usage && return }
 
+	# -- main --
+	# env PARAMETERS
 	local note_home=${NOTE_HOME:-~/notes}
 	local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
-	local separator=${NOTE_SEPARATOR:-'\n'}
+	local note_template
+	[[ -n "$NOTE_TEMPLATE" ]] && note_template=($NOTE_template) \
+	  || note_template=(
+	    '[$(date)] ${title}'
+	    '${input}'
+	    '${pasted}'
+	    )
+
+	local separator=${NOTE_SEPARATOR:-'\n'}  # entry separator
+	local title=${arg_title[-1]}
 
 	local pasted
-	[[ -z "$flag_nopaste" ]] && pasted=$(pbpaste | col -b)
-
-	local title=${arg_title[-1]}
+	[[ -n "$flag_paste" ]] && pasted=$(pbpaste | col -b)
 
 	local input
 	if [[ -n "$flag_input" ]]; then
@@ -39,35 +48,25 @@ pbnote () {
 		input=$(cat -)
 	fi
 
-
-	local note_format
-	[[ -n "$NOTE_FORMAT" ]] && note_format=($NOTE_FORMAT) \
-	  || note_format=(
-	    '[$(date)] ${title}'
-	    '${input}'
-	    '${pasted}'
-	    )
-
-	# insert separator if needed
 	if [[ -a "${note_home}/${note_name}" ]]; then
-		if [[ -z "${flag_nonewline}" ]]; then
-			note_format[1]=${separator}${note_format[1]}
+		if [[ -z "${flag_nonewline}" ]]; then  # insert separator if needed
+			note_template[1]=${separator}${note_template[1]}
 		fi
 	fi
 
-	# assemble lines to be inserted
+	# assemble note entry
 	local output
 	local item_sep='' # no separator before 1st line
-	for item in $note_format
+	for item in $note_template
 	do
 		line=$(eval "print -- \"${item}\"")
 		[[ -n "$line" ]] \
-			&& output="${output}"${item_sep}$(eval "print -- \"${line}\"")
-		item_sep='\n'
+			&& output="${output}"${item_sep}${line}
+		item_sep=${separator}
 	done
 
-   print $output >> ${note_home}/${note_name}
-
+	# insert note entry
+    print $output >> ${note_home}/${note_name}
 }
 
 
@@ -105,5 +104,4 @@ note () {
 		ls ${note_home}
 	fi
 }
-
 alias n='note'
