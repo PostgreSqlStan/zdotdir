@@ -1,0 +1,7 @@
+ gfm () {
+    _t=$(mktemp)
+    kramdown -i GFM --smart_quotes='apos,apos,quot,quot' $1 > $_t
+    mv $_t ${_t}.html
+    open -a Safari ${_t}.html
+ }
+
