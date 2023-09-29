@@ -1,93 +1,109 @@
 pbnote () {
-  local flag_help
-  local flag_nonewline
-  local flag_timestamp
-  local flag_input
-  local arg_prefix
-  local usage=(
-    "Usage:"
-    "  pbnote                       save clipboard to default note"
-    "  pbnote name                  save clipboard to named note"
-    "Options:"
-    "  -h --help                    show this message"
-    "  -i --input                   prompt for prefix text"
-    "  -n --no-newline              do not add empty line"
-    "  -p --prefix text             prefix text"
-    "  -t --timestamp               add timestamp"
-  )
+	local flag_help flag_input flag_nonewline flag_nopaste
+	local arg_title
+	local usage=(
+		"Usage:"
+		"  pbnote                       save clipboard to default note"
+		"  pbnote <note name>           save clipboard to named note"
+		"Options:"
+		"  -h --help                    show this message"
+		"  -i --input                   prompt for description"
+		"  -n --no-newline              do not add empty line"
+		"  -t --title <title>           heading title"
+		"  -x --no-paste                do not insert clipboard"
+	)
 
-  add_input () {
-    local input
-    print 'Enter description (^d=exit, ^c=cancel):' \
-      && input=$(cat -)
-    prefix="${prefix}${input}\n"
-  }
+	zmodload zsh/zutil
+	zparseopts -D -F -- \
+		{h,-help}=flag_help \
+		{i,-input}=flag_input \
+		{n,-no-newline}=flag_nonewline \
+		{t,-title}:=arg_title \
+		{x,-no-paste}=flag_nopaste \
+		|| return 1
+	[[ -z "$flag_help" ]] || { print -l $usage && return }
 
-  zmodload zsh/zutil
-  zparseopts -D -F -- \
-    {h,-help}=flag_help \
-    {i,-input}=flag_input \
-    {n,-no-newline}=flag_nonewline \
-    {p,-prefix}:=arg_prefix \
-    {t,-timestamp}=flag_timestamp \
-    || return 1
-  [[ -z "$flag_help" ]] || { print -l $usage && return }
+	local note_home=${NOTE_HOME:-~/notes}
+	local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
+	local separator=${NOTE_SEPARATOR:-'\n'}
 
-  local editor=(${VISUAL:-${EDITOR:-vi}})
-  local note_home=${NOTE_HOME:-~/notes}
-  local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
+	local pasted
+	[[ -z "$flag_nopaste" ]] && pasted=$(pbpaste | col -b)
 
-  local content=$(pbpaste | col -b)
-  local prefix='\n'
+	local title=${arg_title[-1]}
 
-  [[ -a "${note_home}/${note_name}" ]] && [[ -n "${flag_nonewline}" ]] \
-    || prefix=''
+	local input
+	if [[ -n "$flag_input" ]]; then
+		print -- "title: ${title}"
+		print 'Enter description (^d=exit, ^c=cancel):'
+		input=$(cat -)
+	fi
 
-  [[ -n "$flag_timestamp" ]] && prefix=${prefix}"[$(date)]"'\n'
 
-  [[ -n "$flag_input" ]] && add_input
+	local note_format
+	[[ -n "$NOTE_FORMAT" ]] && note_format=($NOTE_FORMAT) \
+	  || note_format=(
+	    '[$(date)] ${title}'
+	    '${input}'
+	    '${pasted}'
+	    )
 
-  print -- ${arg_prefix[-1]}${prefix}${content} >> ${note_home}/${note_name}
-  print -- ${arg_prefix[-1]}${prefix}${content}
-  print -P "%F{yellow}\[ ⇨ ${note_name} \]%f"
+	# insert separator if needed
+	if [[ -a "${note_home}/${note_name}" ]]; then
+		if [[ -z "${flag_nonewline}" ]]; then
+			note_format[1]=${separator}${note_format[1]}
+		fi
+	fi
+
+	# assemble lines to be inserted
+	local output
+	local item_sep='' # no separator before 1st line
+	for item in $note_format
+	do
+		line=$(eval "print -- \"${item}\"")
+		[[ -n "$line" ]] \
+			&& output="${output}"${item_sep}$(eval "print -- \"${line}\"")
+		item_sep='\n'
+	done
+
+   print $output >> ${note_home}/${note_name}
 
 }
-compdef _gnu_generic pbnote
 
 
 note () {
-  local flag_help
-  local flag_edit
-  local usage=(
-    "Usage:"
-    "  note                         list notes"
-    "  note <name>                  show note"
-    "Options:"
-    "  -e --edit <name>             edit note"
-    "  -h --help                    show this message"
-  )
-  zmodload zsh/zutil
-  zparseopts -D -F -- \
-    {h,-help}=flag_help \
-    {e,-edit}=flag_edit \
-    || return 1
-  [[ -z "$flag_help" ]] || { print -l $usage && return }
+	local flag_help
+	local flag_edit
+	local usage=(
+		"Usage:"
+		"  note                         list notes"
+		"  note <name>                  show note"
+		"Options:"
+		"  -e --edit <name>             edit note"
+		"  -h --help                    show this message"
+	)
+	zmodload zsh/zutil
+	zparseopts -D -F -- \
+		{h,-help}=flag_help \
+		{e,-edit}=flag_edit \
+		|| return 1
+	[[ -z "$flag_help" ]] || { print -l $usage && return }
 
-  local note_home=${NOTE_HOME:-~/notes}
-  local editor=(${VISUAL:-${EDITOR:-vi}})
+	local note_home=${NOTE_HOME:-~/notes}
+	local editor=(${VISUAL:-${EDITOR:-vi}})
 
-  if [[ -n $* ]]; then
-    (
-      cd ${note_home}
-      if [[ -n "$flag_edit" ]]; then
-        eval ${editor} $*
-      else
-        less -FX $*
-      fi
-    )
-  else
-    ls ${note_home}
-  fi
+	if [[ -n $* ]]; then
+		(
+			cd ${note_home}
+			if [[ -n "$flag_edit" ]]; then
+				eval ${editor} $*
+			else
+				less -FX $*
+			fi
+		)
+	else
+		ls ${note_home}
+	fi
 }
-compdef '_path_files -W "${NOTE_HOME:-${HOME}/notes/}" -g "^.*"' note
+
 alias n='note'

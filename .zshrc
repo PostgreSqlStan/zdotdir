@@ -59,8 +59,13 @@ my_functions=${ZDOTDIR:-$HOME}/functions
 if [[ -z ${fpath[(r)$my_functions]} ]] ; then
     fpath=($my_functions $fpath)
     autoload -Uz ${my_functions}/*(:t) # autoload functions
+
     note                               # init note function
+    compdef '_path_files -W "${NOTE_HOME:-${HOME}/notes/}" -g "^.*"' note
+    compdef _gnu_generic pbnote
+
     bindlist                           # init bindlist function
+
 fi
 typeset -U fpath                       # remove dupe paths
 
