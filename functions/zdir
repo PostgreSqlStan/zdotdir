@@ -1,14 +1,9 @@
-if [[ ${(a)ZDOTDIR} == ${(a)HOME}/.zsh.d/null_config ]]; then
+# toggle zsh configuration (delete/create ~/.zshenv)
+if [[ -a "${HOME}/.zshenv" ]] ; then
+  rm "${HOME}/.zshenv"
+  print 'ZDOTDIR=~'
+else
   ZDOTDIR=${HOME}/.zsh.d
   print 'ZDOTDIR=${HOME}/.zsh.d' > ${HOME}/.zshenv
   print 'ZDOTDIR=~/.zsh.d'
-else
- ZDOTDIR=${HOME}/.zsh.d/null_config
- print 'ZDOTDIR=${HOME}/.zsh.d/null_config' > ${HOME}/.zshenv
- print 'ZDOTDIR=~/.zsh.d/null_config'
-
 fi
-
-# [[ ${(a)ZDOTDIR} == ${(a)HOME}/.null_config ]] && \
-#     { ZDOTDIR=${HOME}/.zsh; print 'ZDOTDIR=${HOME}/.zsh' > ${HOME}/.zshenv;  print 'ZDOTDIR=~/.zsh' } || \
-#     { ZDOTDIR=${HOME}/.null_config; print 'ZDOTDIR=${HOME}/.null_config' > ${HOME}/.zshenv; print 'ZDOTDIR=~/.null_config'}
