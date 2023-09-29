@@ -1,73 +1,80 @@
+# v0.2
 pbnote () {
-	# zshoptions setup
-	local flag_help flag_input flag_nonewline flag_nopaste
-	local arg_title
-	local usage=(
-		"Usage:"
-		"  pbnote                       add entry to default note"
-		"  pbnote <note name>           add entry named note"
-		"Options:"
-		"  -h --help                    show this message"
-		"  -i --input                   prompt for description"
-		"  -n --no-newline              no empty line before entry"
-		"  -t --title <title>           entry title"
-		"  -v --paste                   insert clipboard (copied text)"
-	)
-	zmodload zsh/zutil
-	zparseopts -D -F -- \
-		{h,-help}=flag_help \
-		{i,-input}=flag_input \
-		{n,-no-newline}=flag_nonewline \
-		{t,-title}:=arg_title \
-		{v,-paste}=flag_paste \
-		|| return 1
-	[[ -z "$flag_help" ]] || { print -l $usage && return }
+    # zshoptions setup
+    local flag_bullet flag_timestamp flag_help flag_input flag_nonewline
+    local arg_title flag_paste
+    local usage=(
+        "Usage:"
+        "  pbnote                       add entry to default note"
+        "  pbnote <note name>           add entry named note"
+        "Options:"
+        "  -b --bullet                  insert bullet"
+        "  -d --datetime                add timestamp"
+        "  -h --help                    show this message"
+        "  -i --input                   prompt for description"
+        "  -n --no-newline              no empty line before entry"
+        "  -t --title <title>           entry title"
+        "  -v --paste                   insert clipboard (copied text)"
+    )
+    zmodload zsh/zutil
+    zparseopts -D -F -- \
+        {b,-bullet}=flag_bullet \
+        {d,-datetime}=flag_timestamp \
+        {h,-help}=flag_help \
+        {i,-input}=flag_input \
+        {n,-no-newline}=flag_nonewline \
+        {t,-title}:=arg_title \
+        {v,-paste}=flag_paste \
+        || return 1
+    [[ -z "$flag_help" ]] || { print -l $usage && return }
 
-	# -- main --
-	# env PARAMETERS
-	local note_home=${NOTE_HOME:-~/notes}
-	local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
-	local note_template
-	[[ -n "$NOTE_TEMPLATE" ]] && note_template=($NOTE_template) \
-	  || note_template=(
-	    '[$(date)] ${title}'
-	    '${input}'
-	    '${pasted}'
-	    )
 
-	local separator=${NOTE_SEPARATOR:-'\n'}  # entry separator
-	local title=${arg_title[-1]}
+    # env PARAMETERS
+    local note_home=${NOTE_HOME:-~/notes}
+    local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
+    local separator=${NOTE_SEPARATOR:-'\n'}  # entry separator
+    local note_bullet=${NOTE_BULLET:-'✒️  '}
 
-	local pasted
-	[[ -n "$flag_paste" ]] && pasted=$(pbpaste | col -b)
+    local output
+    addtext () {
+        output=${output}$*
+    }
 
-	local input
-	if [[ -n "$flag_input" ]]; then
-		print -- "title: ${title}"
-		print 'Enter description (^d=exit, ^c=cancel):'
-		input=$(cat -)
-	fi
+    # heading line
+    [[ -n "$flag_bullet" ]] && addtext "${note_bullet}"
+    [[ -n "$flag_timestamp"  ]] && addtext '['$(date)'] '
+    [[ -n "$arg_title" ]] && addtext "${arg_title[-1]}"
+    [[ -n "$output" ]] && addtext "\n"
 
-	if [[ -a "${note_home}/${note_name}" ]]; then
-		if [[ -z "${flag_nonewline}" ]]; then  # insert separator if needed
-			note_template[1]=${separator}${note_template[1]}
-		fi
-	fi
+    local input
+    if [[ -n "$flag_input" ]]; then
+        print -- "title: ${title}"
+        print 'Enter description (^d=exit, ^c=cancel):'
+        input=$(cat -)
+        addtext "${input}\n"
+    fi
 
-	# assemble note entry
-	local output
-	local item_sep='' # no separator before 1st line
-	for item in $note_template
-	do
-		line=$(eval "print -- \"${item}\"")
-		[[ -n "$line" ]] \
-			&& output="${output}"${item_sep}${line}
-		item_sep=${separator}
-	done
+    if [[ -n "$flag_paste" ]]; then
+        addtext "$(pbpaste | col -b)\n"
+    fi
 
-	# insert note entry
-    print $output >> ${note_home}/${note_name}
+    # prepend separator
+    if [[ -a "${note_home}/${note_name}" ]]; then
+        if [[ -z "${flag_nonewline}" ]]; then
+            output=${separator}${output}
+        fi
+    fi
+
+    # insert note entry
+    print -n -- $output >> ${note_home}/${note_name}
 }
+
+# pbnote CHANGES:
+# remove NOTE_TEMPLATE
+# concatenate output in addtext sub-func
+# added -b --bullet option
+# add NOTE_BULLET
+# added -d --datetime (timestamp) option
 
 
 note () {
