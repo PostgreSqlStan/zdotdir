@@ -57,7 +57,7 @@ _comp_options+=(globdots)
 ## FUNCTIONS                            (${ZDOTDIR}/functions)
 my_functions=${ZDOTDIR:-$HOME}/functions
 if [[ -z ${fpath[(r)$my_functions]} ]] ; then
-    fpath=($my_functions $fpath)
+    fpath=($my_functions $fpath)       # add to $fpath
     autoload -Uz ${my_functions}/*(:t) # autoload functions
 
     note                               # init note function
