@@ -35,3 +35,50 @@ These lines in `.zshrc` load the starship prompt and specify a custom config fil
 export STARSHIP_CONFIG=${ZDOTDIR}/config/starship.toml
 eval "$(starship init zsh)"
 ```
+
+### function: `note`
+
+The `note` function displays notes stored in `~/notes`.
+
+```zsh
+% note example
+This is an example note.
+```
+
+Called without arguments, `note` lists the files in `~/notes`.
+
+The file containing the function also assigns the alias `n` to it:
+
+```zsh
+% n example
+This is an example note.
+```
+
+Use the `-e` (edit) option to open a note in the program specified by the shell environment variable `$VISUAL` or `$EDITOR`.
+
+```zsh
+% n -e example
+```
+
+The default directory, `~/notes`, can be overriden with the variable `$NOTE_HOME`.
+
+
+### function: `pbnote`
+
+The `pbnote` function appends text to a note stored in `~/notes`.
+
+The note name `pasted-yyyymmdd` (where yyyyymmdd represents the date) is used when none is specified.
+
+There are several options which control what is inserted:
+
+```
+Options:
+  -b --bullet                  insert bullet
+  -d --datetime                add timestamp
+  -h --help                    show this message
+  -i --input                   prompt for description
+  -n --no-newline              no empty line before entry
+  -t --title <title>           entry title
+  -v --paste                   insert clipboard (copied text)
+```
+
