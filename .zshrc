@@ -30,6 +30,7 @@ eval "$(starship init zsh)"
 
 ## ZSH options
 setopt INTERACTIVE_COMMENTS
+setopt NO_CLOBBER                      # previously too ignorant to need this
 
 ## ZSH NAMED DIRETORIES
 blog=${HOME}/repos/postgresqlstan.github.io/
