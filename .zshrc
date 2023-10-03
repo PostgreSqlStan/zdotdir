@@ -77,7 +77,7 @@ autoload -U promptinit; promptinit     # prompt theme system
 alias l='ls -F'
 alias la='ls -AF'
 alias ll='ls -ahl'
-alias h=' fc -li'                      # history w/timestamp
+alias h=' fc -l'
 alias rh=' fc -RI'                     # refresh history from other windows
 alias cb=' fc -ln -1 | pbcopy'         # copy buffer (last command)
 alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
