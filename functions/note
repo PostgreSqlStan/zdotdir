@@ -1,100 +1,32 @@
-# v0.2
-pbnote () {
-    # zshoptions setup
-    local flag_bullet flag_timestamp flag_help flag_input flag_nonewline
-    local arg_title flag_paste
-    local usage=(
-        "Usage:"
-        "  pbnote                       add entry to default note"
-        "  pbnote <note name>           add entry named note"
-        "Options:"
-        "  -b --bullet                  insert bullet"
-        "  -d --datetime                add timestamp"
-        "  -h --help                    show this message"
-        "  -i --input                   prompt for description"
-        "  -n --no-newline              no empty line before entry"
-        "  -t --title <title>           entry title"
-        "  -v --paste                   insert clipboard (copied text)"
-    )
-    zmodload zsh/zutil
-    zparseopts -D -F -- \
-        {b,-bullet}=flag_bullet \
-        {d,-datetime}=flag_timestamp \
-        {h,-help}=flag_help \
-        {i,-input}=flag_input \
-        {n,-no-newline}=flag_nonewline \
-        {t,-title}:=arg_title \
-        {v,-paste}=flag_paste \
-        || return 1
-    [[ -z "$flag_help" ]] || { print -l $usage && return }
-
-
-    # env PARAMETERS
-    local note_home=${NOTE_HOME:-~/notes}
-    local note_name=(${*:-${NOTE_NAME:-'pasted-'$(date "+%Y-%m-%d")}})
-    local separator=${NOTE_SEPARATOR:-'\n'}  # entry separator
-    local note_bullet=${NOTE_BULLET:-'✒️  '}
-
-    local output
-    addtext () {
-        output=${output}$*
-    }
-
-    # heading line
-    [[ -n "$flag_bullet" ]] && addtext "${note_bullet}"
-    [[ -n "$flag_timestamp"  ]] && addtext '['$(date)'] '
-    [[ -n "$arg_title" ]] && addtext "${arg_title[-1]}"
-    [[ -n "$output" ]] && addtext "\n"
-
-    local input
-    if [[ -n "$flag_input" ]]; then
-        print -- "title: ${title}"
-        print 'Enter description (^d=exit, ^c=cancel):'
-        input=$(cat -)
-        addtext "${input}\n"
-    fi
-
-    if [[ -n "$flag_paste" ]]; then
-        addtext "$(pbpaste | col -b)\n"
-    fi
-
-    # prepend separator
-    if [[ -a "${note_home}/${note_name}" ]]; then
-        if [[ -z "${flag_nonewline}" ]]; then
-            output=${separator}${output}
-        fi
-    fi
-
-    # insert note entry
-    print -n -- $output >> ${note_home}/${note_name}
-}
-
-# pbnote CHANGES:
-# remove NOTE_TEMPLATE
-# concatenate output in addtext sub-func
-# added -b --bullet option
-# add NOTE_BULLET
-# added -d --datetime (timestamp) option
-
-
 note () {
-	local flag_help
-	local flag_edit
+	local _version='0.1'
+	local flag_help flag_version flag_edit
 	local usage=(
+		"note  - display file(s) stored configurable notes directory"
+		" "
 		"Usage:"
-		"  note                         list notes"
-		"  note <name>                  show note"
+		"  note NOTE                    show NOTE"
+		"  note                         list files in notes directory"
+		" "
 		"Options:"
-		"  -e --edit <name>             edit note"
+		"  -e --edit NOTE               edit note"
 		"  -h --help                    show this message"
+		"  --version                    show version"
+		" "
+		"Environment parameters:"
+		"  NOTE_HOME                    notes directory, default={HOME}/notes"
+		" "
+		"See repo for updates, comments, issues, etc:"
+		"  https://github.com/PostgreSqlStan/note-functions"
 	)
 	zmodload zsh/zutil
-	zparseopts -D -F -- \
-		{h,-help}=flag_help \
+	zparseopts -D -F -- {h,-help}=flag_help -version=flag_version \
 		{e,-edit}=flag_edit \
 		|| return 1
 	[[ -z "$flag_help" ]] || { print -l $usage && return }
+	[[ -n "$flag_version" ]] && { print "${0} version ${_version}" && return }
 
+	## MAIN ##
 	local note_home=${NOTE_HOME:-~/notes}
 	local editor=(${VISUAL:-${EDITOR:-vi}})
 
@@ -111,4 +43,96 @@ note () {
 		ls ${note_home}
 	fi
 }
-alias n='note'
+nnote () {
+	local _version='0.1'
+	emulate -LR zsh
+	local flag_help flag_version flag_bullet flag_dts arg_note flag_squeeze
+	local flag_paste
+	local usage=(
+		"nnote  - add entry to default note"
+		" "
+		"Usage:"
+		"  nnote [OPTIONS] [TEXT]       add entry to default note"
+		" "
+		"Options:"
+		"  -b --bullet                  include bullet"
+		"  -d --datetime                include date/time"
+		"  -h --help                    show this message"
+		"  -n --note NOTE               set default to NOTE"
+		"  -s --squeeze                 no empty line before entry"
+		"  -v --paste                   add clipboard to entry"
+		"  --version                    show version"
+		" "
+		"Environment parameters:"
+		"  NOTE_HOME                    notes directory, default={HOME}/notes"
+		"  NOTE_NAME                    note to create/append, set with -n option"
+		"  NOTE_BULLET                  default='▶️  '"
+		" "
+		"The -n option set the default note for the current shell session: "
+		" "
+		"  nnote -n example Entry Example"
+		"  nnote 2nd entry"
+		" "
+		"Piped text is added to a note entry:"
+		" "
+		"  print piped text | nnote Pipe Example"
+		" "
+		"Use -v to add the clipboard to an entry:"
+		" "
+		"  print pasted text | pbcopy && nnote -v Clipboard Example"
+		" "
+		"Use -s to not add an empty line before the entry:"
+		" "
+		"  nnote Squeeze Example - line 1"
+		"  nnote -s Squeeze Example - line 2"
+		" "
+		"The -b and -d options add a bullet and stampstamp:"
+		" "
+		"  nnote -bd Bullet Timestamp Example"
+		" "
+		"If the -n option has not be used and NOTE_NAME is not set, a note "
+		"named with the current date (yyyymmdd_note) is used."
+		" "
+		"See repo for updates, comments, issues, etc:"
+		"  https://github.com/PostgreSqlStan/note-functions"
+	)
+	zmodload zsh/zutil
+	zparseopts -D -F -- {h,-help}=flag_help -version=flag_version \
+		{b,-bullet}=flag_bullet {d,-datetime}=flag_dts {n,-note}:=arg_note \
+		{s,-squeeze}=flag_squeeze {v,-paste}=flag_paste \
+		|| return 1
+	[[ -z "$flag_help" ]] || { print -l $usage && return }
+	[[ -n "$flag_version" ]] && { print "${0} version ${_version}" && return }
+
+	## MAIN ##
+	local note_bullet=${NOTE_BULLET:-'▶️  '}
+	local note_home=${NOTE_HOME:-~/notes}
+
+	# note option (-n): set NOTE_NAME
+	[[ -n "$arg_note" ]] && export NOTE_NAME=${arg_note[-1]}
+	local note_name=${NOTE_NAME:-$(date "+%Y%m%d")"_note"}
+
+	local header
+	[[ -n "$flag_bullet" ]] && header=${header}${note_bullet}
+	[[ -n "$flag_dts"  ]] && header=${header}'['$(date)'] '
+	[[ -n $@ ]] && header=${header}"${@}"
+
+	local msg
+	local pasted
+	[[ -p "/dev/stdin" ]] && msg="$(cat)"
+	[[ -n "$flag_paste" ]] && pasted="$(pbpaste | col -b)"
+
+	[[ -n "$msg" ]] && [[ -n "$pasted" ]] && msg="${msg}""\n"
+	msg="${msg}""${pasted}"
+
+	# add '\n' to header if header & msg not empty
+	[[ -n "$header" ]] && [[ -n "$msg" ]] && header=${header}"\n"
+
+	# prepend '\n' if note exists & not --squeeze
+	[[ -a "${note_home}/${note_name}" ]] && [[ -z "$flag_squeeze" ]] \
+		&& header='\n'${header}
+
+	print -- "${header}${msg}" >> ${note_home}/${note_name}
+}
+alias n=note
+alias nn=nnote
