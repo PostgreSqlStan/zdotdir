@@ -38,10 +38,10 @@ These functions are intended and might be appropriate for general use:
 
 <!-- - `note` are `nnote` functions, both autoloaded from the `note` file, are  maintained in a separate, [note-functions](https://github.com/PostgreSqlStan/note-functions), repo. -->
 
-`note` - display files(s) from configurable notes directory
-`nnote` - add entry to default note
-`bindlist` - list key bindings in a compact form
-`manf` - (copied from somewhere) search man page for supplied text, e.g. `manf zshall CONDITIONAL`
+- `note` - display files(s) from configurable notes directory
+- `nnote` - add entry to default note
+- `bindlist` - list key bindings in a compact form
+- `manf` - (copied from somewhere) search man page for supplied text, e.g. `manf zshall CONDITIONAL`
 
 These functions are tailored for my setup:
 
