@@ -80,10 +80,10 @@ alias ll='ls -ahl'
 alias h=' fc -l'
 alias rh=' fc -RI'                     # refresh history from other windows
 alias cb=' fc -ln -1 | pbcopy'         # copy buffer (last command)
-alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
-alias e='subl'
 alias cgrep='grep --color=always'
-
+alias e='subl'
+alias z='subl  ~z'                     # open ~z {ZSHDOTDIR} in editor
+alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
 ## BINDINGS
 # (still tweaking these...)
 
