@@ -1,5 +1,7 @@
-## PATH
-PATH=/Applications/Sublime\ Text.app/Contents/SharedSupport/bin:$PATH
+## PATH - APPEND
+PATH=$PATH:/Applications/Sublime\ Text.app/Contents/SharedSupport/bin
+
+## PATH - PREPEND
 PATH=/usr/local/pgsql/bin:$PATH        # postres
 PATH=$HOME/.local/bin:$PATH            # python site-packages
 PATH=$HOME/.rubies/ruby-master/bin:$PATH  # local ruby (3)
@@ -31,6 +33,7 @@ eval "$(starship init zsh)"
 ## ZSH options
 setopt INTERACTIVE_COMMENTS
 setopt NO_CLOBBER                      # previously too ignorant to need this
+setopt nobanghist
 
 ## ZSH NAMED DIRETORIES
 blog=${HOME}/repos/postgresqlstan.github.io/
@@ -77,42 +80,34 @@ autoload -U promptinit; promptinit     # prompt theme system
 alias l='ls -F'
 alias la='ls -AF'
 alias ll='ls -ahl'
-alias h=' fc -l'
-alias rh=' fc -RI'                     # refresh history from other windows
-alias cb=' fc -ln -1 | pbcopy'         # copy buffer (last command)
+alias h=' fc -l'                       # history
+alias hr=' fc -RI'                     # history refresh from other windows
+alias hc=' fc -ln -1 | pbcopy'         # history copy (last command)
+alias hd=' fc -li'                     # show EXTENDED_HISTORY (w/timestamp)
 alias cgrep='grep --color=always'
 alias e='subl'
 alias z='subl  ~z'                     # open ~z {ZSHDOTDIR} in editor
 alias config='subl ${ZDOTDIR:-$HOME}/.zshrc'
-## BINDINGS
-# (still tweaking these...)
 
+## BINDINGS (still tweaking these...)
 # additions
 bindkey "^[^K" describe-key-briefly
 bindkey "^[k" kill-region
-
 # ⌥m replaces ^@ for set-mark-command:
 bindkey "^[m" set-mark-command
 bindkey -r "^@"
-
 # ⌥M replaces "^X^X" for exchange-point-and-mark:
 bindkey "^[M" exchange-point-and-mark
 bindkey -r "^X^X"
-
 # ^Z replaces a few key combos for undo:
 bindkey "^Z" undo
 bindkey -r "^X^U"
 bindkey -r "^Xu"
 bindkey -r "^_"
-
 # remove redundant bindings i'll never use:
 bindkey -r "^[\$"                      # spell-word
-
 # remove bindings that don't actually work
 bindkey -r "^S"
 bindkey -r "^Q"
-
-
-## NEW
 
 
