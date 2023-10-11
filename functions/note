@@ -44,7 +44,7 @@ note () {
 	fi
 }
 nnote () {
-	local _version='0.1'
+	local _version='0.12'
 	emulate -LR zsh
 	local flag_help flag_version flag_bullet flag_dts arg_note flag_squeeze
 	local flag_paste
@@ -58,7 +58,7 @@ nnote () {
 		"  -b --bullet                  include bullet"
 		"  -d --datetime                include date/time"
 		"  -h --help                    show this message"
-		"  -n --note NOTE               set default to NOTE"
+		"  -n --note NOTE               specify NOTE"
 		"  -s --squeeze                 no empty line before entry"
 		"  -v --paste                   add clipboard to entry"
 		"  --version                    show version"
@@ -68,10 +68,15 @@ nnote () {
 		"  NOTE_NAME                    note to create/append, set with -n option"
 		"  NOTE_BULLET                  default='▶️  '"
 		" "
-		"The -n option set the default note for the current shell session: "
+		"Use the NOTE_NAME paramter to set the default note name for the current "
+		"shell session."
+		" "
+		"  NOTE_NAME=other-note"
+		"  nnote Other-note entry"
+		" "
+		"Use the -n option to specify a note other than the default: "
 		" "
 		"  nnote -n example Entry Example"
-		"  nnote 2nd entry"
 		" "
 		"Piped text is added to a note entry:"
 		" "
@@ -80,11 +85,6 @@ nnote () {
 		"Use -v to add the clipboard to an entry:"
 		" "
 		"  print pasted text | pbcopy && nnote -v Clipboard Example"
-		" "
-		"Use -s to not add an empty line before the entry:"
-		" "
-		"  nnote Squeeze Example - line 1"
-		"  nnote -s Squeeze Example - line 2"
 		" "
 		"The -b and -d options add a bullet and stampstamp:"
 		" "
@@ -107,32 +107,39 @@ nnote () {
 	## MAIN ##
 	local note_bullet=${NOTE_BULLET:-'▶️  '}
 	local note_home=${NOTE_HOME:-~/notes}
+	local note_name
 
-	# note option (-n): set NOTE_NAME
-	[[ -n "$arg_note" ]] && export NOTE_NAME=${arg_note[-1]}
-	local note_name=${NOTE_NAME:-$(date "+%Y%m%d")"_note"}
+	if [[ -n "$arg_note" ]]; then
+		note_name=${arg_note[-1]}
+	else
+		note_name=${NOTE_NAME:-$(date "+%Y%m%d")"_note"}
+	fi
 
+	# assemble 1st line of entry: [bullet] [date] [arg]
 	local header
 	[[ -n "$flag_bullet" ]] && header=${header}${note_bullet}
 	[[ -n "$flag_dts"  ]] && header=${header}'['$(date)'] '
 	[[ -n $@ ]] && header=${header}"${@}"
 
-	local msg
+	# include stdin and/or clipboard in $body
+	local body
+	[[ -p "/dev/stdin" ]] && body="$(cat)"
 	local pasted
-	[[ -p "/dev/stdin" ]] && msg="$(cat)"
 	[[ -n "$flag_paste" ]] && pasted="$(pbpaste | col -b)"
+	[[ -n "$body" ]] && [[ -n "$pasted" ]] && body="${body}""\n"
+	body="${body}""${pasted}"
 
-	[[ -n "$msg" ]] && [[ -n "$pasted" ]] && msg="${msg}""\n"
-	msg="${msg}""${pasted}"
-
-	# add '\n' to header if header & msg not empty
-	[[ -n "$header" ]] && [[ -n "$msg" ]] && header=${header}"\n"
-
-	# prepend '\n' if note exists & not --squeeze
-	[[ -a "${note_home}/${note_name}" ]] && [[ -z "$flag_squeeze" ]] \
-		&& header='\n'${header}
-
-	print -- "${header}${msg}" >> ${note_home}/${note_name}
+	if [[ -n "$header" || -n "$body"  ]]; then  # entry not empty
+		[[ -n "$header" && -n "$body" ]] && header=${header}"\n"
+		[[ -a "${note_home}/${note_name}" ]] && [[ -z "$flag_squeeze" ]] \
+			&& header='\n'${header}  # add newline before entry
+		print -- "${header}${body}" >> ${note_home}/${note_name}
+	else
+		print -- "nnote error: empty note entry"
+		print -- "See usage:"
+		print -- "  nnote -h"
+		return 1
+	fi
 }
 alias n=note
 alias nn=nnote

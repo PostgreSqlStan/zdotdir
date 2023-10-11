@@ -38,6 +38,7 @@ setopt nobanghist
 ## ZSH NAMED DIRETORIES
 blog=${HOME}/repos/postgresqlstan.github.io/
 z=${ZDOTDIR}
+f=${ZDOTDIR}/functions
 
 ## ZSH MODULES
 unalias run-help 2>/dev/null           # don't display err if already done
@@ -76,13 +77,16 @@ typeset -U fpath                       # remove dupe paths
 # load after FUNCTIONS to include custom prompt theme
 autoload -U promptinit; promptinit     # prompt theme system
 
+## FUNCTIONS
+hn () { print -z -- "$(fc -ln ${1:--1} ${2:=$1})" }  # history # (replaces ! banghist )
+hc () { print -- "$(fc -ln ${1:--1} ${2:=$1})" | pbcopy }
+
 ## ALIASES
 alias l='ls -F'
 alias la='ls -AF'
 alias ll='ls -ahl'
 alias h=' fc -l'                       # history
 alias hr=' fc -RI'                     # history refresh from other windows
-alias hc=' fc -ln -1 | pbcopy'         # history copy (last command)
 alias hd=' fc -li'                     # show EXTENDED_HISTORY (w/timestamp)
 alias cgrep='grep --color=always'
 alias e='subl'
